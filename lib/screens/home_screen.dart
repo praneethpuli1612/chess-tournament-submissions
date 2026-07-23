@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'players_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -19,10 +19,17 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.people),
-              label: const Text("Players"),
-            ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PlayersScreen(),
+      ),
+    );
+  },
+  icon: const Icon(Icons.people),
+  label: const Text("Players"),
+),
 
             const SizedBox(height: 20),
 
