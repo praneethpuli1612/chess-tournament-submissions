@@ -1,75 +1,17 @@
-# Candidate Assignment Submission Guide
+# chess_tournament
 
-Follow these steps to submit your assignment to this repository.
+A new Flutter project.
 
-## Step 1: Fork the Repository
+## Getting Started
 
-Click the **Fork** button in the top-right corner of this repository. This creates your own copy of the project in your GitHub account.
+This project is a starting point for a Flutter application.
 
-## Step 2: Clone Your Fork
+A few resources to get you started if this is your first Flutter project:
 
-Copy the URL of your fork and run:
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
 
-```bash
-git clone https://github.com/your-username/repository-name.git
-```
-
-Go to the project directory:
-
-```bash
-cd repository-name
-```
-
-## Step 3: Create a New Branch
-
-Create a branch for your changes.
-
-```bash
-git checkout -b your-branch-name
-```
-
-## Step 4: Work on the Assignment
-
-Complete the assigned task in your local repository and save your changes.
-
-or
-
-If you have already completed the project using another repository then follow this steps:
-
-1. Copy all of your completed project files into your forked repository.
-3. Make sure all required project files are included.
-4. Verify that the project builds and runs correctly before committing your changes.
-
-## Step 5: Commit Your Changes
-
-Stage and commit your work.
-
-```bash
-git add .
-git commit -m "Describe your changes"
-```
-
-## Step 6: Push Your Branch
-
-Push your branch to your GitHub fork.
-
-```bash
-git push origin your-branch-name
-```
-
-## Step 7: Create a Pull Request
-
-1. Open your fork on GitHub.
-2. Click **Compare & pull request**.
-3. Add a clear title and description of your changes.
-4. Click **Create pull request**.
-
-Your submission is now ready for review.
-
----
-
-## Tips
-
-- Create a new branch for every task.
-- Write clear and meaningful commit messages.
-- Respond to review comments and update your Pull Request if requested.
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
