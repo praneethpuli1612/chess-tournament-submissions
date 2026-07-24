@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'players_screen.dart';
+import 'tournaments_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -19,14 +20,14 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PlayersScreen(),
-      ),
-    );
-  },
+              onPressed: () {
+                Navigator.push(
+                context,
+                  MaterialPageRoute(
+                  builder: (context) => const PlayersScreen(),
+                ),
+              );
+            },
   icon: const Icon(Icons.people),
   label: const Text("Players"),
 ),
@@ -34,10 +35,17 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.emoji_events),
-              label: const Text("Tournaments"),
-            ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TournamentsScreen(),
+      ),
+    );
+  },
+  icon: const Icon(Icons.emoji_events),
+  label: const Text("Tournaments"),
+),
 
             const SizedBox(height: 20),
 

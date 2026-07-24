@@ -2,6 +2,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/player.dart';
+import '../models/tournament.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -23,12 +24,23 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE tournaments(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              location TEXT NOT NULL
+            )
+          ''');
+        }
+      },
     );
   }
 
-  Future _createDB(Database db, int version) async {
+  Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE players(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,12 +48,25 @@ class DatabaseHelper {
         rating INTEGER NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE tournaments(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        location TEXT NOT NULL
+      )
+    ''');
   }
 
-  Future<Player> createPlayer(Player player) async {
-    final db = await instance.database;
+  // ---------------- PLAYER CRUD ----------------
 
-    final id = await db.insert('players', player.toMap());
+  Future<Player> createPlayer(Player player) async {
+    final db = await database;
+
+    final id = await db.insert(
+      'players',
+      player.toMap(),
+    );
 
     return Player(
       id: id,
@@ -51,15 +76,15 @@ class DatabaseHelper {
   }
 
   Future<List<Player>> getPlayers() async {
-    final db = await instance.database;
+    final db = await database;
 
     final result = await db.query('players');
 
-    return result.map((json) => Player.fromMap(json)).toList();
+    return result.map((e) => Player.fromMap(e)).toList();
   }
 
   Future<int> updatePlayer(Player player) async {
-    final db = await instance.database;
+    final db = await database;
 
     return db.update(
       'players',
@@ -70,7 +95,7 @@ class DatabaseHelper {
   }
 
   Future<int> deletePlayer(int id) async {
-    final db = await instance.database;
+    final db = await database;
 
     return db.delete(
       'players',
@@ -79,8 +104,54 @@ class DatabaseHelper {
     );
   }
 
-  Future close() async {
-    final db = await instance.database;
-    db.close();
+  // ---------------- TOURNAMENT CRUD ----------------
+
+  Future<Tournament> createTournament(Tournament tournament) async {
+    final db = await database;
+
+    final id = await db.insert(
+      'tournaments',
+      tournament.toMap(),
+    );
+
+    return Tournament(
+      id: id,
+      name: tournament.name,
+      location: tournament.location,
+    );
+  }
+
+  Future<List<Tournament>> getTournaments() async {
+    final db = await database;
+
+    final result = await db.query('tournaments');
+
+    return result.map((e) => Tournament.fromMap(e)).toList();
+  }
+
+  Future<int> updateTournament(Tournament tournament) async {
+    final db = await database;
+
+    return db.update(
+      'tournaments',
+      tournament.toMap(),
+      where: 'id = ?',
+      whereArgs: [tournament.id],
+    );
+  }
+
+  Future<int> deleteTournament(int id) async {
+    final db = await database;
+
+    return db.delete(
+      'tournaments',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> close() async {
+    final db = await database;
+    await db.close();
   }
 }
