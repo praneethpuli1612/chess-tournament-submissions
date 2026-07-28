@@ -9,6 +9,18 @@ class Player {
     required this.rating,
   });
 
+  Player copyWith({
+    int? id,
+    String? name,
+    int? rating,
+  }) {
+    return Player(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      rating: rating ?? this.rating,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -19,9 +31,9 @@ class Player {
 
   factory Player.fromMap(Map<String, dynamic> map) {
     return Player(
-      id: map['id'],
-      name: map['name'],
-      rating: map['rating'],
+      id: map['id'] as int?,
+      name: map['name'] as String,
+      rating: map['rating'] as int,
     );
   }
 }

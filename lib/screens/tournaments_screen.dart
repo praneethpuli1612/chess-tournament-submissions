@@ -1,71 +1,51 @@
 import 'package:flutter/material.dart';
-
-import '../database/database_helper.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/tournament.dart';
+import '../providers/tournament_providers.dart';
+import 'tournament_details_screen.dart';
 
-class TournamentsScreen extends StatefulWidget {
+class TournamentsScreen extends ConsumerWidget {
   const TournamentsScreen({super.key});
 
-  @override
-  State<TournamentsScreen> createState() => _TournamentsScreenState();
-}
-
-class _TournamentsScreenState extends State<TournamentsScreen> {
-  List<Tournament> tournaments = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadTournaments();
-  }
-
-  Future loadTournaments() async {
-    tournaments = await DatabaseHelper.instance.getTournaments();
-    setState(() {});
-  }
-
-  Future addTournament() async {
-    final nameController = TextEditingController();
-    final locationController = TextEditingController();
+  Future<void> showTournamentDialog(BuildContext context, WidgetRef ref, {Tournament? tournament}) async {
+    final nameController = TextEditingController(text: tournament?.name ?? '');
+    final locationController = TextEditingController(text: tournament?.location ?? '');
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Add Tournament"),
+        title: Text(tournament == null ? "New Tournament" : "Edit Tournament"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Tournament Name",
-              ),
-            ),
-            TextField(
-              controller: locationController,
-              decoration: const InputDecoration(
-                labelText: "Location",
-              ),
-            ),
+            TextField(controller: nameController, decoration: const InputDecoration(labelText: "Tournament Name")),
+            const SizedBox(height: 12),
+            TextField(controller: locationController, decoration: const InputDecoration(labelText: "Location")),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              final tournament = Tournament(
-                name: nameController.text,
-                location: locationController.text,
-              );
+              if (nameController.text.trim().isEmpty) return;
+              final db = ref.read(dbProvider);
 
-              await DatabaseHelper.instance.createTournament(tournament);
+              if (tournament == null) {
+                await db.createTournament(Tournament(
+                  name: nameController.text.trim(),
+                  location: locationController.text.trim(),
+                ));
+              } else {
+                await db.updateTournament(tournament.copyWith(
+                  name: nameController.text.trim(),
+                  location: locationController.text.trim(),
+                ));
+              }
 
+              if (!context.mounted) return;
               Navigator.pop(context);
-
-              loadTournaments();
+              ref.refresh(tournamentsProvider);
+              ref.refresh(dashboardStatsProvider);
             },
             child: const Text("Save"),
           ),
@@ -74,145 +54,64 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
     );
   }
 
-  Future<void> editTournament(Tournament tournament) async {
-    final nameController =
-        TextEditingController(text: tournament.name);
-
-    final locationController =
-        TextEditingController(text: tournament.location);
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Tournament"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Tournament Name",
-              ),
-            ),
-            TextField(
-              controller: locationController,
-              decoration: const InputDecoration(
-                labelText: "Location",
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final updatedTournament = Tournament(
-                id: tournament.id,
-                name: nameController.text,
-                location: locationController.text,
-              );
-
-              await DatabaseHelper.instance
-                  .updateTournament(updatedTournament);
-
-              Navigator.pop(context);
-
-              loadTournaments();
-            },
-            child: const Text("Update"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> deleteTournament(int id) async {
-    await DatabaseHelper.instance.deleteTournament(id);
-    loadTournaments();
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tournamentsAsync = ref.watch(tournamentsProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Tournaments"),
-        centerTitle: true,
+      appBar: AppBar(title: const Text("Tournaments")),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => showTournamentDialog(context, ref),
+        icon: const Icon(Icons.add),
+        label: const Text("New Event"),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: addTournament,
-        child: const Icon(Icons.add),
-      ),
-      body: tournaments.isEmpty
-          ? const Center(
-              child: Text("No Tournaments Added"),
-            )
-          : ListView.builder(
-              itemCount: tournaments.length,
-              itemBuilder: (context, index) {
-                final tournament = tournaments[index];
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: ListTile(
-                    title: Text(tournament.name),
-                    subtitle: Text(tournament.location),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            color: Colors.blue,
+      body: tournamentsAsync.when(
+        data: (tournaments) => tournaments.isEmpty
+            ? const Center(child: Text("No tournaments created."))
+            : ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: tournaments.length,
+                itemBuilder: (context, index) {
+                  final tournament = tournaments[index];
+                  return Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xffD4AF37),
+                        child: Icon(Icons.emoji_events, color: Colors.black),
+                      ),
+                      title: Text(tournament.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      subtitle: Text("📍 ${tournament.location}"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            onPressed: () => showTournamentDialog(context, ref, tournament: tournament),
                           ),
-                          onPressed: () {
-                            editTournament(tournament);
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.red,
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              await ref.read(dbProvider).deleteTournament(tournament.id!);
+                              ref.refresh(tournamentsProvider);
+                              ref.refresh(dashboardStatsProvider);
+                            },
                           ),
-                          onPressed: () async {
-                            final shouldDelete = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("Delete Tournament"),
-                                content: const Text(
-                                  "Are you sure you want to delete this tournament?",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text("Delete"),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldDelete == true) {
-                              await deleteTournament(tournament.id!);
-                            }
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => TournamentDetailsScreen(tournament: tournament)),
+                        );
+                      },
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const Center(child: Text("Error loading tournaments")),
+      ),
     );
   }
 }
